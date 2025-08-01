@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     authDomain: 'sos-electricity-app.firebaseapp.com',
     storageBucket: 'sos-electricity-app.firebasestorage.app',
   );
+
 }

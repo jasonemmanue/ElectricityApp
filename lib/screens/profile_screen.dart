@@ -1,10 +1,12 @@
-// lib/screens/profile_screen.dart
-
+// lib/screens/profile_screen.dart (mis à jour)
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
-
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
@@ -15,6 +17,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = context.watch<User?>();
+
     return Container(
       color: Colors.grey.shade200,
       child: SingleChildScrollView(
@@ -22,13 +27,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
           child: Column(
             children: [
-              _buildProfileHeader(),
+              _buildProfileHeader(user),
               const SizedBox(height: 32),
               _buildStatsCard(),
               const SizedBox(height: 16),
               _buildPreferencesCard(),
               const SizedBox(height: 32),
-              _buildLogoutButton(),
+              _buildLogoutButton(authService),
             ],
           ),
         ),
@@ -36,7 +41,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(User? user) {
+    // Formatter pour la date, assurez-vous que `intl` est dans pubspec.yaml
+    final creationDate = user?.metadata.creationTime;
+    final formattedDate = creationDate != null
+        ? DateFormat('MMMM yyyy', 'fr_FR').format(creationDate)
+        : '...';
+
     return Column(
       children: [
         const CircleAvatar(
@@ -45,13 +56,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Icon(Icons.person, size: 60, color: Colors.white),
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Marie ATANGANA',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        Text(
+          user?.email ?? 'Utilisateur Anonyme',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
-          'Client depuis Mars 2025',
+          'Client depuis $formattedDate',
           style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
         ),
       ],
@@ -78,13 +89,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 8),
             _buildStatRow('Évaluations données:', '8'),
             const SizedBox(height: 8),
-            Row(
+            const Row(
               children: [
-                const Text('Note moyenne donnée:', style: TextStyle(fontSize: 16)),
-                const Spacer(),
-                const Icon(Icons.star, color: Colors.orange, size: 20),
-                const SizedBox(width: 4),
-                const Text('4.5/5', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Note moyenne donnée:', style: TextStyle(fontSize: 16)),
+                Spacer(),
+                Icon(Icons.star, color: Colors.orange, size: 20),
+                SizedBox(width: 4),
+                Text('4.5/5', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             )
           ],
@@ -149,10 +160,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildLogoutButton() {
+
+  Widget _buildLogoutButton(AuthService authService) {
     return ElevatedButton.icon(
-      onPressed: () {
-        // Logique de déconnexion
+      onPressed: () async {
+        await authService.signOut();
+        // L'AuthWrapper s'occupera de la redirection
       },
       icon: const Icon(Icons.logout, color: Colors.white),
       label: const Text('Se déconnecter'),
