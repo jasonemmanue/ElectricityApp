@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import '../widgets/service_card.dart';
 import 'appointment_screen.dart';
 import 'chat_screen.dart';
-import 'profile_screen.dart'; // Importer le nouvel écran de profil
+import 'profile_screen.dart';
+import 'settings_screen.dart';
+import 'design_info_screen.dart';
+import 'renovation_info_screen.dart';
+import 'appointments_history_screen.dart';
+import 'quote_request_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -14,12 +19,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  // Liste des pages à afficher
   static const List<Widget> _widgetOptions = <Widget>[
     HomePageContent(),
-    AppointmentScreen(),
+    AppointmentsHistoryScreen(),
     ChatScreen(),
-    ProfileScreen(), // Ajouter l'écran de profil ici
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -29,16 +33,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    // AppBar pour la page de RDV
     if (_selectedIndex == 1) {
       return AppBar(
         backgroundColor: Colors.blue.shade800,
-        title: const Text('Prise de Rendez-vous', style: TextStyle(color: Colors.white)),
-        leading: const Icon(Icons.calendar_month, color: Colors.white),
+        title: const Text('Mes Rendez-vous', style: TextStyle(color: Colors.white)),
+        leading: const Icon(Icons.history, color: Colors.white),
         elevation: 0,
       );
     }
-    // AppBar pour la page de Chat
     if (_selectedIndex == 2) {
       return AppBar(
         backgroundColor: Colors.blue.shade800,
@@ -47,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
       );
     }
-    // AppBar pour la page de Profil
     if (_selectedIndex == 3) {
       return AppBar(
         backgroundColor: Colors.blue.shade800,
@@ -56,14 +57,18 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
           ),
         ],
         elevation: 0,
       );
     }
 
-    // AppBar par défaut pour la page d'accueil
     return AppBar(
       backgroundColor: Colors.blue.shade800,
       elevation: 0,
@@ -109,6 +114,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: _buildAppBar(),
       body: _widgetOptions.elementAt(_selectedIndex),
+      // --- CORRECTION : AFFICHER LE BOUTON SEULEMENT SUR LA PAGE D'ACCUEIL ---
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AppointmentScreen()),
+          );
+        },
+        label: const Text('Prendre RDV'),
+        icon: const Icon(Icons.add),
+        backgroundColor: Colors.orange.shade700,
+      )
+          : null, // Si l'index n'est pas 0, ne rien afficher
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
@@ -126,8 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-
-// Widget contenant le corps de la page d'accueil
 class HomePageContent extends StatelessWidget {
   const HomePageContent({Key? key}) : super(key: key);
 
@@ -136,6 +154,7 @@ class HomePageContent extends StatelessWidget {
     return Container(
       color: Colors.grey.shade200,
       child: ListView(
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 80),
         children: [
           const SizedBox(height: 10),
           ServiceCard(
@@ -143,21 +162,36 @@ class HomePageContent extends StatelessWidget {
             title: 'Service Dépannage',
             details: const ['Électricité Bâtiment', 'Électricité Réseau','Dépannage Industriel'],
             buttonText: 'Demander un devis',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const QuoteRequestScreen()),
+              );
+            },
           ),
           ServiceCard(
             icon: Icons.home_work,
             title: 'Service Rénovation',
             details: const ['Électricité BT', 'Pose en apparent avec goulotte'],
-            buttonText: 'Prendre rendez-vous',
-            onPressed: () {},
+            buttonText: 'Consulter',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const RenovationInfoScreen()),
+              );
+            },
           ),
           ServiceCard(
             icon: Icons.design_services,
             title: 'Service Conception',
             details: const ['Installation selon NF C100', 'Pose inverseur semi/manuel'],
             buttonText: 'Consulter',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DesignInfoScreen()),
+              );
+            },
           ),
           const SizedBox(height: 10),
         ],

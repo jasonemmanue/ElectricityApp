@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AppointmentScreen extends StatefulWidget {
   const AppointmentScreen({Key? key}) : super(key: key);
@@ -20,27 +22,29 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     'Conception - Pose inverseur'
   ];
 
+  // Contrôleurs pour les champs du formulaire
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  bool _isInit = true; // Flag pour l'initialisation
+  // Nouveaux contrôleurs pour le paiement
+  String? _selectedPaymentMethod = 'Orange Money';
+  final List<String> _paymentMethods = ['Orange Money', 'Mobile Money', 'Carte Bancaire'];
+  final TextEditingController _totalAmountController = TextEditingController();
+  final TextEditingController _paidAmountController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // On initialise seulement la date ici
     _dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // On initialise l'heure ici, car cela dépend du context
-    if (_isInit) {
+    if (_timeController.text.isEmpty) {
       _timeController.text = TimeOfDay.now().format(context);
-      _isInit = false; // On s'assure que cela ne se reproduit pas
     }
   }
 
@@ -70,69 +74,91 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              _buildSectionTitle('Service demandé'),
-              _buildServiceDropdown(),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Date souhaitée'),
-              _buildDateField(),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Heure préférée'),
-              _buildTimeField(),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Description du problème'),
-              _buildDescriptionField(),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Adresse d\'intervention'),
-              _buildAddressField(),
-              const SizedBox(height: 32),
-              _buildSubmitButton(),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _submitAppointment() async {
+    if (_formKey.currentState!.validate()) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur : Utilisateur non connecté.')),
+        );
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('appointments').add({
+        'userId': user.uid,
+        'userEmail': user.email,
+        'service': _selectedService,
+        'date': _dateController.text,
+        'time': _timeController.text,
+        'description': _descriptionController.text,
+        'address': _addressController.text,
+        'createdAt': Timestamp.now(),
+        'status': 'En attente',
+        'methode_paiement': _selectedPaymentMethod,
+        'montant_total': double.tryParse(_totalAmountController.text) ?? 0,
+        'montant_envoye': double.tryParse(_paidAmountController.text) ?? 0,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rendez-vous confirmé et envoyé !')),
+      );
+      // Retour à la page précédente après la soumission
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      decoration: BoxDecoration(
-          color: Colors.blue.shade800,
-          borderRadius: BorderRadius.circular(10)
+  @override
+  Widget build(BuildContext context) {
+    // Cette page est maintenant une page distincte, elle a besoin de son propre Scaffold
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Prendre un rendez-vous'),
+        backgroundColor: Colors.blue.shade800,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(width: 48), // Spacer for centering
-          const Spacer(),
-          const Text(
-            'Nouveau Rendez-vous',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle('Service demandé'),
+                _buildServiceDropdown(),
+                const SizedBox(height: 16),
+                _buildSectionTitle('Date et heure'),
+                Row(
+                  children: [
+                    Expanded(child: _buildDateField()),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildTimeField()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildSectionTitle('Description du problème'),
+                _buildDescriptionField(),
+                const SizedBox(height: 16),
+                _buildSectionTitle('Adresse d\'intervention'),
+                _buildAddressField(),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Paiement de l\'avance'),
+                _buildPaymentDropdown(),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _buildTotalAmountField()),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildPaidAmountField()),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                _buildSubmitButton(),
+              ],
             ),
           ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () {
-              // Vous pouvez ajouter une action ici, comme revenir à l'accueil
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -178,6 +204,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       controller: _dateController,
       readOnly: true,
       decoration: InputDecoration(
+        labelText: 'Date',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
@@ -192,6 +219,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       controller: _timeController,
       readOnly: true,
       decoration: InputDecoration(
+        labelText: 'Heure',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
@@ -211,6 +239,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
       ),
+      validator: (value) => value!.trim().isEmpty ? 'Veuillez décrire votre problème' : null,
     );
   }
 
@@ -223,20 +252,59 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
       ),
+      validator: (value) => value!.trim().isEmpty ? 'Veuillez entrer une adresse' : null,
     );
   }
+
+  Widget _buildPaymentDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedPaymentMethod,
+      decoration: InputDecoration(
+        labelText: 'Méthode de paiement',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+      ),
+      onChanged: (String? newValue) {
+        setState(() { _selectedPaymentMethod = newValue; });
+      },
+      items: _paymentMethods.map((method) => DropdownMenuItem(value: method, child: Text(method))).toList(),
+    );
+  }
+
+  Widget _buildTotalAmountField() {
+    return TextFormField(
+      controller: _totalAmountController,
+      decoration: InputDecoration(
+        labelText: 'Total (FCFA)',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+      ),
+      keyboardType: TextInputType.number,
+      validator: (value) => value!.isEmpty ? 'Requis' : null,
+    );
+  }
+
+  Widget _buildPaidAmountField() {
+    return TextFormField(
+      controller: _paidAmountController,
+      decoration: InputDecoration(
+        labelText: 'Avance (FCFA)',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+      ),
+      keyboardType: TextInputType.number,
+      validator: (value) => value!.isEmpty ? 'Requis' : null,
+    );
+  }
+
 
   Widget _buildSubmitButton() {
     return Center(
       child: ElevatedButton(
-        onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            // Logique de soumission du formulaire
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Rendez-vous confirmé !')),
-            );
-          }
-        },
+        onPressed: _submitAppointment,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.green.shade600,
           foregroundColor: Colors.white,
@@ -257,6 +325,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     _timeController.dispose();
     _descriptionController.dispose();
     _addressController.dispose();
+    _totalAmountController.dispose();
+    _paidAmountController.dispose();
     super.dispose();
   }
 }

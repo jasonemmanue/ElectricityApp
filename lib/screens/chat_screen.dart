@@ -1,7 +1,8 @@
 // lib/screens/chat_screen.dart
-
 import 'package:flutter/material.dart';
-import '../models/chat_message.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/chat_message.dart'; // Bien que non utilisé directement, il est bon de le garder pour référence
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -12,49 +13,72 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      sender: 'Électricien',
-      text: 'Bonjour ! J\'ai bien reçu votre demande de dépannage. Pouvez-vous me décrire le problème plus précisément ?',
-      isSentByMe: false,
-    ),
-    ChatMessage(
-      sender: 'Vous',
-      text: 'Bonjour, j\'ai une panne de courant dans ma cuisine depuis ce matin. Les autres pièces fonctionnent normalement.',
-      isSentByMe: true,
-    ),
-    ChatMessage(
-      sender: 'Électricien',
-      text: 'D\'accord, cela ressemble à un problème de disjoncteur. Je peux passer cet après-midi vers 15h. Le diagnostic coûte 50€.',
-      isSentByMe: false,
-    ),
-  ];
+  final User? user = FirebaseAuth.instance.currentUser;
 
   void _handleSubmitted(String text) {
+    if (text.trim().isEmpty || user == null) return;
+
+    final userUid = user!.uid;
+    final userEmail = user!.email;
     _textController.clear();
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          sender: 'Vous',
-          text: text,
-          isSentByMe: true,
-        ),
-      );
+
+    // 1. Ajoute le nouveau message à la sous-collection
+    FirebaseFirestore.instance
+        .collection('chats')
+        .doc(userUid) // Le document principal du chat porte l'UID du client
+        .collection('messages') // La sous-collection contient les messages
+        .add({
+      'text': text,
+      'senderId': userUid, // L'ID de l'expéditeur est celui du client
+      'timestamp': Timestamp.now(),
     });
+
+    // 2. Met à jour le document principal pour un tri facile côté admin
+    FirebaseFirestore.instance.collection('chats').doc(userUid).set({
+      'lastMessageAt': Timestamp.now(),
+      'userEmail': userEmail, // Facilite l'affichage dans la liste admin
+      'userId': userUid,
+    }, SetOptions(merge: true)); // 'merge: true' pour ne pas écraser les données existantes
   }
 
   @override
   Widget build(BuildContext context) {
+    if (user == null) {
+      return const Center(
+        child: Text("Veuillez vous connecter pour accéder au chat."),
+      );
+    }
+
     return Column(
       children: [
         _buildHeader(),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(8.0),
-            reverse: false, // Pour afficher l'historique du plus ancien au plus récent
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              return _buildMessageBubble(_messages[index]);
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('chats')
+                .doc(user!.uid)
+                .collection('messages')
+                .orderBy('timestamp', descending: true) // Les plus récents en premier
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(child: Text("Démarrez la conversation !"));
+              }
+
+              final messages = snapshot.data!.docs;
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(8.0),
+                reverse: true, // Affiche la liste en partant du bas
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  var messageData = messages[index].data() as Map<String, dynamic>;
+                  return _buildMessageBubble(messageData);
+                },
+              );
             },
           ),
         ),
@@ -84,15 +108,18 @@ class _ChatScreenState extends State<ChatScreen> {
           const Spacer(),
           IconButton(
             icon: Icon(Icons.call, color: Colors.red.shade700),
-            onPressed: () {},
+            onPressed: () { /* Logique d'appel à implémenter */ },
           )
         ],
       ),
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message) {
-    final isMe = message.isSentByMe;
+  Widget _buildMessageBubble(Map<String, dynamic> message) {
+    // On vérifie si le message a été envoyé par l'utilisateur actuel ou par l'admin
+    final isMe = message['senderId'] == user!.uid;
+    final senderName = isMe ? 'Vous' : 'Électricien';
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5.0),
       child: Row(
@@ -103,23 +130,13 @@ class _ChatScreenState extends State<ChatScreen> {
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
             decoration: BoxDecoration(
               color: isMe ? Colors.blue.shade600 : Colors.grey.shade200,
-              borderRadius: isMe
-                  ? const BorderRadius.only(
-                topLeft: Radius.circular(15),
-                bottomLeft: Radius.circular(15),
-                topRight: Radius.circular(15),
-              )
-                  : const BorderRadius.only(
-                topRight: Radius.circular(15),
-                bottomRight: Radius.circular(15),
-                topLeft: Radius.circular(15),
-              ),
+              borderRadius: BorderRadius.circular(15),
             ),
             child: Column(
-              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  message.sender,
+                  senderName,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: isMe ? Colors.white : Colors.black87,
@@ -127,7 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  message.text,
+                  message['text'] ?? '',
                   style: TextStyle(color: isMe ? Colors.white : Colors.black87),
                 ),
               ],
