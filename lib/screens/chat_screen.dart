@@ -1,3 +1,4 @@
+// lib/screens/chat_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,12 +42,10 @@ class _ChatScreenState extends State<ChatScreen> {
       'text': encryptedText,
       'senderId': user.uid,
       'timestamp': Timestamp.now(),
-      // --- CORRECTION MAJEURE ICI ---
-      // On utilise directement le champ 'text' (déjà chiffré) du message original.
       if (_replyingTo != null)
         'replyingTo': {
           'messageId': _replyingTo!.id,
-          'text': _replyingTo!['text'], // On prend le texte déjà chiffré.
+          'text': _replyingTo!['text'],
         }
     };
 
@@ -56,10 +55,12 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection('messages')
         .add(messageData);
 
+    // --- MODIFICATION POUR LES NOTIFICATIONS ADMIN ---
     await FirebaseFirestore.instance.collection('chats').doc(user.uid).set({
       'lastMessageAt': Timestamp.now(),
       'userEmail': user.email,
       'userId': user.uid,
+      'unreadChatCountAdmin': FieldValue.increment(1), // <-- LIGNE AJOUTÉE
     }, SetOptions(merge: true));
 
     _messageController.clear();
@@ -75,7 +76,7 @@ class _ChatScreenState extends State<ChatScreen> {
         index: index,
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOutCubic,
-        alignment: 0.5, // Centre le message sur l'écran
+        alignment: 0.5,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -110,7 +111,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 final messages = snapshot.data!.docs;
-                // Sauter au dernier message à l'ouverture
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (_itemScrollController.isAttached) {
                     _itemScrollController.jumpTo(index: messages.length - 1);
@@ -139,7 +139,6 @@ class _ChatScreenState extends State<ChatScreen> {
         final decryptedText = _encryptionService.decryptText(messageData['text']);
         final messageTimestamp = (messageData['timestamp'] as Timestamp).toDate();
 
-        // --- Logique améliorée pour les séparateurs de date ---
         bool showDateSeparator = false;
         if (index == 0) {
           showDateSeparator = true;

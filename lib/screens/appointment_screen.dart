@@ -1,3 +1,4 @@
+// lib/screens/appointment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,13 +23,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     'Conception - Pose inverseur'
   ];
 
-  // Contrôleurs pour les champs du formulaire
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  // Nouveaux contrôleurs pour le paiement
   String? _selectedPaymentMethod = 'Orange Money';
   final List<String> _paymentMethods = ['Orange Money', 'Mobile Money', 'Carte Bancaire'];
   final TextEditingController _totalAmountController = TextEditingController();
@@ -84,6 +83,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         return;
       }
 
+      // Enregistrement du rendez-vous
       await FirebaseFirestore.instance.collection('appointments').add({
         'userId': user.uid,
         'userEmail': user.email,
@@ -99,10 +99,18 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         'montant_envoye': double.tryParse(_paidAmountController.text) ?? 0,
       });
 
+      // --- MODIFICATION POUR LES NOTIFICATIONS ADMIN ---
+      await FirebaseFirestore.instance.collection('chats').doc(user.uid).set({
+        'lastMessageAt': Timestamp.now(),
+        'userEmail': user.email,
+        'userId': user.uid,
+        'unreadAppointmentCountAdmin': FieldValue.increment(1), // <-- LIGNE AJOUTÉE
+      }, SetOptions(merge: true));
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Rendez-vous confirmé et envoyé !')),
       );
-      // Retour à la page précédente après la soumission
+
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -111,7 +119,6 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Cette page est maintenant une page distincte, elle a besoin de son propre Scaffold
     return Scaffold(
       appBar: AppBar(
         title: const Text('Prendre un rendez-vous'),
