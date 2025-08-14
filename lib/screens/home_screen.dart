@@ -1,3 +1,4 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import '../widgets/service_card.dart';
 import 'appointment_screen.dart';
@@ -8,6 +9,7 @@ import 'design_info_screen.dart';
 import 'renovation_info_screen.dart';
 import 'appointments_history_screen.dart';
 import 'quote_request_screen.dart';
+import 'task_request_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -114,7 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: _buildAppBar(),
       body: _widgetOptions.elementAt(_selectedIndex),
-      // --- CORRECTION : AFFICHER LE BOUTON SEULEMENT SUR LA PAGE D'ACCUEIL ---
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton.extended(
         onPressed: () {
@@ -127,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.add),
         backgroundColor: Colors.orange.shade700,
       )
-          : null, // Si l'index n'est pas 0, ne rien afficher
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -190,6 +191,18 @@ class HomePageContent extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const DesignInfoScreen()),
+              );
+            },
+          ),
+          ServiceCard(
+            icon: Icons.construction,
+            title: 'Prestation des services\n(travaux à la tâche)',
+            details: const ['Installation de prises', 'Montage de luminaires', 'Petits travaux électriques'],
+            buttonText: 'Demander un service',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TaskRequestScreen()),
               );
             },
           ),
