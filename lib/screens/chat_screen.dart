@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../widgets/message_bubble.dart';
-import '../services/encryption_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -18,7 +17,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final EncryptionService _encryptionService = EncryptionService();
 
   final ItemScrollController _itemScrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
@@ -36,16 +34,15 @@ class _ChatScreenState extends State<ChatScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final encryptedText = _encryptionService.encryptText(_messageController.text);
-
     Map<String, dynamic> messageData = {
-      'text': encryptedText,
+      'text': _messageController.text.trim(),
       'senderId': user.uid,
       'timestamp': Timestamp.now(),
       if (_replyingTo != null)
         'replyingTo': {
           'messageId': _replyingTo!.id,
-          'text': _replyingTo!['text'],
+          // S'assure que 'text' existe avant de l'envoyer
+          'text': (_replyingTo!.data() as Map<String, dynamic>)['text'],
         }
     };
 
@@ -55,12 +52,11 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection('messages')
         .add(messageData);
 
-    // --- MODIFICATION POUR LES NOTIFICATIONS ADMIN ---
     await FirebaseFirestore.instance.collection('chats').doc(user.uid).set({
       'lastMessageAt': Timestamp.now(),
       'userEmail': user.email,
       'userId': user.uid,
-      'unreadChatCountAdmin': FieldValue.increment(1), // <-- LIGNE AJOUTÉE
+      'unreadChatCountAdmin': FieldValue.increment(1),
     }, SetOptions(merge: true));
 
     _messageController.clear();
@@ -112,7 +108,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 final messages = snapshot.data!.docs;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_itemScrollController.isAttached) {
+                  if (_itemScrollController.isAttached) { // Vérifie si le contrôleur est prêt
                     _itemScrollController.jumpTo(index: messages.length - 1);
                   }
                 });
@@ -136,7 +132,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final messageDoc = messages[index];
         final messageData = messageDoc.data() as Map<String, dynamic>;
 
-        final decryptedText = _encryptionService.decryptText(messageData['text']);
+        final plainText = messageData['text'] as String? ?? '';
         final messageTimestamp = (messageData['timestamp'] as Timestamp).toDate();
 
         bool showDateSeparator = false;
@@ -145,18 +141,14 @@ class _ChatScreenState extends State<ChatScreen> {
         } else {
           final prevMessageData = messages[index - 1].data() as Map<String, dynamic>;
           final prevTimestamp = (prevMessageData['timestamp'] as Timestamp).toDate();
-          if (messageTimestamp.day != prevTimestamp.day ||
-              messageTimestamp.month != prevTimestamp.month ||
-              messageTimestamp.year != prevTimestamp.year) {
+          if (DateUtils.isSameDay(messageTimestamp, prevTimestamp) == false) {
             showDateSeparator = true;
           }
         }
 
         final isMe = _auth.currentUser!.uid == messageData['senderId'];
         final replyData = messageData['replyingTo'] as Map<String, dynamic>?;
-        final decryptedRepliedText = replyData != null
-            ? _encryptionService.decryptText(replyData['text'])
-            : null;
+        final repliedTextPlain = replyData != null ? replyData['text'] as String? : null;
 
         final messageBubble = Dismissible(
           key: Key(messageDoc.id),
@@ -169,11 +161,11 @@ class _ChatScreenState extends State<ChatScreen> {
             child: const Icon(Icons.reply, color: Colors.blue),
           ),
           child: MessageBubble(
-            text: decryptedText,
-            sender: messageData['senderId'],
+            text: plainText,
+            sender: messageData['senderId'] ?? '',
             timestamp: messageTimestamp,
             isMe: isMe,
-            repliedText: decryptedRepliedText,
+            repliedText: repliedTextPlain,
             onQuoteTap: replyData == null
                 ? null
                 : () => _scrollToMessage(replyData['messageId'], messages),
@@ -223,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildMessageComposer() {
     final replyingToText = _replyingTo != null
-        ? _encryptionService.decryptText(_replyingTo!['text'])
+        ? (_replyingTo!.data() as Map<String, dynamic>)['text'] as String?
         : null;
 
     return Container(
@@ -248,7 +240,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "En réponse à : $replyingToText",
+                      "En réponse à : ${replyingToText ?? ''}",
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontStyle: FontStyle.italic),
                     ),

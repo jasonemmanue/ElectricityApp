@@ -1,14 +1,14 @@
-// lib/main.dart (mis à jour)
+// lib/main.dart (CLIENT - Mis à jour avec l'écran de chargement animé)
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/auth_wrapper.dart';
+import 'screens/animated_loading_screen.dart'; // <-- 1. Importez l'écran de chargement
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,14 +32,13 @@ void main() async {
   );
 }
 
-// Le reste de votre fichier MyApp ne change pas...
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SOS_ELECTRICITY',
+      title: 'SosElectricity', // Le nom de votre application
       theme: ThemeData(
           primarySwatch: Colors.blue,
           scaffoldBackgroundColor: Colors.grey.shade200,
@@ -47,7 +46,9 @@ class MyApp extends StatelessWidget {
             backgroundColor: Colors.blue.shade800,
             foregroundColor: Colors.white,
           )),
-      home: const AuthWrapper(),
+      // 2. Affichez l'écran de chargement animé en premier.
+      // Il naviguera vers AuthWrapper après 3 secondes.
+      home: const AnimatedLoadingScreen(nextScreen: AuthWrapper()),
       debugShowCheckedModeBanner: false,
     );
   }
