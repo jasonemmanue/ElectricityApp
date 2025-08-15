@@ -1,5 +1,5 @@
-// lib/screens/design_info_screen.dart
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class DesignInfoScreen extends StatelessWidget {
   const DesignInfoScreen({Key? key}) : super(key: key);
@@ -8,35 +8,35 @@ class DesignInfoScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Service Conception'),
+        title: Text('designServiceTitle'.tr()),
         backgroundColor: Colors.blue.shade800,
       ),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Nos services de conception électrique',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              'designHeader'.tr(),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'Nous vous accompagnons dans la planification et la conception de vos installations électriques, en garantissant la conformité avec les normes en vigueur (NF C 15-100).',
-              style: TextStyle(fontSize: 16),
+              'designText'.tr(),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             ListTile(
-              leading: Icon(Icons.check_circle_outline, color: Colors.green),
-              title: Text('Schémas électriques complets'),
-            ),
-            ListTile(
-              leading: Icon(Icons.check_circle_outline, color: Colors.green),
-              title: Text('Dimensionnement des protections'),
+              leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+              title: Text('designListItem1'.tr()),
             ),
             ListTile(
-              leading: Icon(Icons.check_circle_outline, color: Colors.green),
-              title: Text('Installation d\'inverseurs de source (manuel/automatique)'),
+              leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+              title: Text('designListItem2'.tr()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+              title: Text('designListItem3'.tr()),
             ),
           ],
         ),

@@ -1,6 +1,6 @@
-// lib/screens/signup_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -21,7 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final authService = Provider.of<AuthService>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Inscription')),
+      appBar: AppBar(title: Text('signUpTitle'.tr())),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -29,16 +29,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Créer un compte',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                'createAccount'.tr(),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'email'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) =>
                 value!.isEmpty ? 'Veuillez entrer un email' : null,
@@ -46,9 +46,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Mot de passe',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'password'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
                 obscureText: true,
                 validator: (value) => value!.length < 6
@@ -68,11 +68,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     );
                   }
                 },
-                child: const Text('S\'inscrire'),
+                child: Text('signUp'.tr()),
               ),
               TextButton(
                 onPressed: widget.onTap,
-                child: const Text("Vous avez déjà un compte ? Se connecter"),
+                child: Text("alreadyHaveAccount".tr()),
               ),
             ],
           ),

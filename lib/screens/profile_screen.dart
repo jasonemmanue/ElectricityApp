@@ -1,9 +1,8 @@
-// lib/screens/profile_screen.dart (mis à jour)
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../services/auth_service.dart';
-import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -27,7 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
           child: Column(
             children: [
-              _buildProfileHeader(user),
+              _buildProfileHeader(user, context),
               const SizedBox(height: 32),
               _buildStatsCard(),
               const SizedBox(height: 16),
@@ -41,11 +40,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(User? user) {
-    // Formatter pour la date, assurez-vous que `intl` est dans pubspec.yaml
+  Widget _buildProfileHeader(User? user, BuildContext context) {
     final creationDate = user?.metadata.creationTime;
+    // Formatte la date en utilisant la locale actuelle de l'application
     final formattedDate = creationDate != null
-        ? DateFormat('MMMM yyyy', 'fr_FR').format(creationDate)
+        ? DateFormat('MMMM yyyy', context.locale.toString()).format(creationDate)
         : '...';
 
     return Column(
@@ -62,7 +61,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Client depuis $formattedDate',
+          // --- CORRECTION ICI ---
+          // On utilise 'namedArgs' pour remplacer le placeholder {date}
+          'memberSince'.tr(namedArgs: {'date': formattedDate}),
           style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
         ),
       ],
@@ -77,25 +78,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.bar_chart, color: Colors.purple),
-                SizedBox(width: 8),
-                Text('Statistiques', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Icon(Icons.bar_chart, color: Colors.purple),
+                const SizedBox(width: 8),
+                Text('stats'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             const Divider(height: 24),
-            _buildStatRow('Services demandés:', '12'),
+            _buildStatRow('servicesRequested'.tr(), '12'),
             const SizedBox(height: 8),
-            _buildStatRow('Évaluations données:', '8'),
+            _buildStatRow('ratingsGiven'.tr(), '8'),
             const SizedBox(height: 8),
-            const Row(
+            Row(
               children: [
-                Text('Note moyenne donnée:', style: TextStyle(fontSize: 16)),
-                Spacer(),
-                Icon(Icons.star, color: Colors.orange, size: 20),
-                SizedBox(width: 4),
-                Text('4.5/5', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('avgRatingGiven'.tr(), style: const TextStyle(fontSize: 16)),
+                const Spacer(),
+                const Icon(Icons.star, color: Colors.orange, size: 20),
+                const SizedBox(width: 4),
+                const Text('4.5/5', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             )
           ],
@@ -122,20 +123,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.tune, color: Colors.blueAccent),
-                SizedBox(width: 8),
-                Text('Préférences', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Icon(Icons.tune, color: Colors.blueAccent),
+                const SizedBox(width: 8),
+                Text('preferences'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             const Divider(height: 24),
-            _buildSwitchRow('Notifications push', _pushNotifications, (value) {
+            _buildSwitchRow('pushNotifications'.tr(), _pushNotifications, (value) {
               setState(() {
                 _pushNotifications = value;
               });
             }),
-            _buildSwitchRow('WhatsApp intégré', _whatsappIntegrated, (value) {
+            _buildSwitchRow('whatsappIntegrated'.tr(), _whatsappIntegrated, (value) {
               setState(() {
                 _whatsappIntegrated = value;
               });
@@ -160,15 +161,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
   Widget _buildLogoutButton(AuthService authService) {
     return ElevatedButton.icon(
       onPressed: () async {
         await authService.signOut();
-        // L'AuthWrapper s'occupera de la redirection
       },
       icon: const Icon(Icons.logout, color: Colors.white),
-      label: const Text('Se déconnecter'),
+      label: Text('logout'.tr()),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.red.shade700,
         foregroundColor: Colors.white,

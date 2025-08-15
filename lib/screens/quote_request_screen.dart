@@ -1,7 +1,7 @@
-// lib/screens/quote_request_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class QuoteRequestScreen extends StatefulWidget {
   const QuoteRequestScreen({Key? key}) : super(key: key);
@@ -12,11 +12,10 @@ class QuoteRequestScreen extends StatefulWidget {
 
 class _QuoteRequestScreenState extends State<QuoteRequestScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _subjectController = TextEditingController(); // Nouveau contrôleur
+  final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  // --- NOUVELLE FONCTION POUR ENVOYER LE DEVIS DANS LE CHAT ---
   void _submitQuoteRequest() async {
     if (_formKey.currentState!.validate()) {
       final user = FirebaseAuth.instance.currentUser;
@@ -27,7 +26,6 @@ class _QuoteRequestScreenState extends State<QuoteRequestScreen> {
         return;
       }
 
-      // 1. On construit le message formaté
       final String quoteMessage = """
 Demande de Devis:
 
@@ -41,18 +39,16 @@ ${_descriptionController.text}
 ${_addressController.text}
 """;
 
-      // 2. On envoie ce message dans la conversation du client
       await FirebaseFirestore.instance
           .collection('chats')
           .doc(user.uid)
           .collection('messages')
           .add({
         'text': quoteMessage,
-        'senderId': user.uid, // L'expéditeur est le client
+        'senderId': user.uid,
         'timestamp': Timestamp.now(),
       });
 
-      // 3. On met à jour le chat principal pour la notification de l'admin
       await FirebaseFirestore.instance.collection('chats').doc(user.uid).set({
         'lastMessageAt': Timestamp.now(),
         'userEmail': user.email,
@@ -73,7 +69,7 @@ ${_addressController.text}
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Demande de Devis'),
+        title: Text('quoteRequestTitle'.tr()),
         backgroundColor: Colors.blue.shade800,
       ),
       body: SingleChildScrollView(
@@ -83,48 +79,47 @@ ${_addressController.text}
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- CHAMP OBJET AJOUTÉ ---
-              const Text('Objet du dépannage', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('troubleshootingSubject'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _subjectController,
-                decoration: const InputDecoration(
-                  hintText: 'Ex: Panne de courant, installation prise...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: 'subjectPlaceholder'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) => value!.isEmpty ? 'Veuillez définir un objet' : null,
+                validator: (value) => value!.isEmpty ? 'pleaseDefineSubject'.tr() : null,
               ),
               const SizedBox(height: 24),
-              const Text('Description de votre projet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('projectDescription'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 5,
-                decoration: const InputDecoration(
-                  hintText: 'Décrivez les travaux que vous souhaitez faire réaliser...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: 'projectDescriptionPlaceholder'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) => value!.isEmpty ? 'Veuillez fournir une description' : null,
+                validator: (value) => value!.isEmpty ? 'pleaseProvideDescription'.tr() : null,
               ),
               const SizedBox(height: 24),
-              const Text('Adresse du projet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('projectAddress'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(
-                  hintText: 'Votre adresse complète',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: 'yourFullAddress'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) => value!.isEmpty ? 'Veuillez fournir une adresse' : null,
+                validator: (value) => value!.isEmpty ? 'pleaseProvideAddress'.tr() : null,
               ),
               const SizedBox(height: 32),
               Center(
                 child: ElevatedButton(
-                  onPressed: _submitQuoteRequest, // On appelle la nouvelle fonction
+                  onPressed: _submitQuoteRequest,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                  child: const Text('Envoyer la demande'),
+                  child: Text('sendRequest'.tr()),
                 ),
               ),
             ],

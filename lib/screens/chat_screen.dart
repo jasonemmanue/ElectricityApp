@@ -8,7 +8,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../widgets/message_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  const ChatScreen({super.key});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();

@@ -1,5 +1,5 @@
-// lib/screens/support_screen.dart
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({Key? key}) : super(key: key);
@@ -8,7 +8,7 @@ class SupportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Support Client'),
+        title: Text('supportTitle'.tr()),
         backgroundColor: Colors.blue.shade800,
       ),
       body: Padding(
@@ -17,29 +17,29 @@ class SupportScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Contactez-nous',
+              'contactUs'.tr(),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 20),
-            const Card(
+            Card(
               child: ListTile(
-                leading: Icon(Icons.phone),
-                title: Text('Par téléphone'),
-                subtitle: Text('+237 698 452 376'),
+                leading: const Icon(Icons.phone),
+                title: Text('byPhone'.tr()),
+                subtitle: const Text('+237 698 452 376'),
               ),
             ),
-            const Card(
+            Card(
               child: ListTile(
-                leading: Icon(Icons.email),
-                title: Text('Par email'),
-                subtitle: Text('Kammeugnejulio41@gmail.com'),
+                leading: const Icon(Icons.email),
+                title: Text('byEmail'.tr()),
+                subtitle: const Text('Kammeugnejulio41@gmail.com'),
               ),
             ),
-            const Card(
+            Card(
               child: ListTile(
-                leading: Icon(Icons.location_on),
-                title: Text('Adresse'),
-                subtitle: Text('407 Rue ESSOMBA, YAOUNDE CAMEROUN'),
+                leading: const Icon(Icons.location_on),
+                title: Text('address'.tr()),
+                subtitle: const Text('407 Rue ESSOMBA, YAOUNDE CAMEROUN'),
               ),
             ),
           ],

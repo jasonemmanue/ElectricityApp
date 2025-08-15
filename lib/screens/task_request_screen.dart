@@ -1,10 +1,9 @@
-// lib/screens/task_request_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class TaskRequestScreen extends StatefulWidget {
-  // --- MODIFICATION ICI : "const" a été retiré ---
   const TaskRequestScreen({super.key});
 
   @override
@@ -66,7 +65,7 @@ ${_descriptionController.text}
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Prestation de services'),
+        title: Text('taskRequestTitle'.tr()),
         backgroundColor: Colors.blue.shade800,
       ),
       body: SingleChildScrollView(
@@ -76,27 +75,27 @@ ${_descriptionController.text}
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Objet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('object'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _objectController,
-                decoration: const InputDecoration(
-                  hintText: 'Ex: Installation d\'une nouvelle prise',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: 'objectPlaceholder'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) => value!.isEmpty ? 'Veuillez définir un objet' : null,
+                validator: (value) => value!.isEmpty ? 'pleaseDefineSubject'.tr() : null,
               ),
               const SizedBox(height: 24),
-              const Text('Description du travail', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('workDescription'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 5,
-                decoration: const InputDecoration(
-                  hintText: 'Décrivez le travail à effectuer...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: 'workDescriptionPlaceholder'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) => value!.isEmpty ? 'Veuillez fournir une description' : null,
+                validator: (value) => value!.isEmpty ? 'pleaseProvideDescription'.tr() : null,
               ),
               const SizedBox(height: 32),
               Center(
@@ -105,7 +104,7 @@ ${_descriptionController.text}
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
-                  child: const Text('Envoyer'),
+                  child: Text('send'.tr()),
                 ),
               ),
             ],

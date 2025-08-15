@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AppointmentsHistoryScreen extends StatelessWidget {
   const AppointmentsHistoryScreen({Key? key}) : super(key: key);
@@ -10,7 +11,7 @@ class AppointmentsHistoryScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      return const Center(child: Text("Veuillez vous connecter pour voir vos rendez-vous."));
+      return Center(child: Text("pleaseLogin".tr()));
     }
 
     return Scaffold(
@@ -25,10 +26,10 @@ class AppointmentsHistoryScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'Vous n\'avez aucun rendez-vous.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+                'noAppointments'.tr(),
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
               ),
             );
           }
@@ -50,7 +51,7 @@ class AppointmentsHistoryScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        appt['service'] ?? 'Service',
+                        appt['service'] ?? 'service'.tr(),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
@@ -67,7 +68,7 @@ class AppointmentsHistoryScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.receipt_long, size: 16, color: Colors.grey),
                           const SizedBox(width: 8),
-                          Text('Total: ${appt['montant_total'] ?? 'N/A'} FCFA'),
+                          Text('${'total'.tr()}: ${appt['montant_total'] ?? 'N/A'} FCFA'),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -75,7 +76,7 @@ class AppointmentsHistoryScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.payment, size: 16, color: Colors.grey),
                           const SizedBox(width: 8),
-                          Text('Avance: ${appt['montant_envoye'] ?? 'N/A'} FCFA (${appt['methode_paiement'] ?? 'N/A'})'),
+                          Text('${'advance'.tr()}: ${appt['montant_envoye'] ?? 'N/A'} FCFA (${appt['methode_paiement'] ?? 'N/A'})'),
                         ],
                       ),
                     ],

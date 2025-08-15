@@ -9,14 +9,14 @@ class MessageBubble extends StatelessWidget {
   final VoidCallback? onQuoteTap;
 
   const MessageBubble({
-    Key? key,
+    super.key,
     required this.text,
     required this.sender,
     required this.timestamp,
     required this.isMe,
     this.repliedText,
     this.onQuoteTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

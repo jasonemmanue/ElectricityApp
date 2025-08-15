@@ -1,6 +1,6 @@
-// lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,7 +20,29 @@ class _LoginScreenState extends State<LoginScreen> {
     final authService = Provider.of<AuthService>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Connexion')),
+      appBar: AppBar(
+        title: Text('loginTitle'.tr()),
+        actions: [
+          // Widget pour changer de langue
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: DropdownButton<Locale>(
+              value: context.locale,
+              icon: const Icon(Icons.language, color: Colors.white),
+              underline: const SizedBox(),
+              items: const [
+                DropdownMenuItem(value: Locale('en'), child: Text('🇺🇸 English')),
+                DropdownMenuItem(value: Locale('fr'), child: Text('🇫🇷 Français')),
+              ],
+              onChanged: (locale) {
+                if (locale != null) {
+                  context.setLocale(locale);
+                }
+              },
+            ),
+          )
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -28,11 +50,11 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: 'email'.tr()),
             ),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Mot de passe'),
+              decoration: InputDecoration(labelText: 'password'.tr()),
               obscureText: true,
             ),
             const SizedBox(height: 20),
@@ -43,11 +65,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   _passwordController.text,
                 );
               },
-              child: const Text('Se connecter'),
+              child: Text('signIn'.tr()),
             ),
             TextButton(
               onPressed: widget.onTap,
-              child: const Text("Pas de compte ? S'inscrire"),
+              child: Text('dontHaveAnAccount'.tr()),
             ),
           ],
         ),

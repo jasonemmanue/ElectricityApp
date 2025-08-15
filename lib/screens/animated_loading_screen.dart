@@ -1,12 +1,11 @@
 // lib/screens/animated_loading_screen.dart
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 class AnimatedLoadingScreen extends StatefulWidget {
   final Widget nextScreen;
 
-  const AnimatedLoadingScreen({Key? key, required this.nextScreen}) : super(key: key);
+  const AnimatedLoadingScreen({super.key, required this.nextScreen});
 
   @override
   _AnimatedLoadingScreenState createState() => _AnimatedLoadingScreenState();

@@ -1,5 +1,5 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../widgets/service_card.dart';
 import 'appointment_screen.dart';
 import 'chat_screen.dart';
@@ -35,79 +35,79 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    if (_selectedIndex == 1) {
-      return AppBar(
-        backgroundColor: Colors.blue.shade800,
-        title: const Text('Mes Rendez-vous', style: TextStyle(color: Colors.white)),
-        leading: const Icon(Icons.history, color: Colors.white),
-        elevation: 0,
-      );
-    }
-    if (_selectedIndex == 2) {
-      return AppBar(
-        backgroundColor: Colors.blue.shade800,
-        title: const Text('Discussion en Ligne', style: TextStyle(color: Colors.white)),
-        leading: const Icon(Icons.chat_bubble, color: Colors.white),
-        elevation: 0,
-      );
-    }
-    if (_selectedIndex == 3) {
-      return AppBar(
-        backgroundColor: Colors.blue.shade800,
-        title: const Text('Profil Utilisateur', style: TextStyle(color: Colors.white)),
-        leading: const Icon(Icons.person, color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
+    String title;
+    IconData leadingIcon;
+
+    switch (_selectedIndex) {
+      case 1:
+        title = 'myAppointments'.tr();
+        leadingIcon = Icons.history;
+        break;
+      case 2:
+        title = 'onlineChat'.tr();
+        leadingIcon = Icons.chat_bubble;
+        break;
+      case 3:
+        title = 'userProfile'.tr();
+        leadingIcon = Icons.person;
+        break;
+      default:
+        return AppBar(
+          backgroundColor: Colors.blue.shade800,
+          elevation: 0,
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              backgroundColor: Colors.orange.shade700,
+              child: const Text('I', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
           ),
-        ],
-        elevation: 0,
-      );
+          title: Text(
+            'homeTitle'.tr(),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications, color: Colors.white),
+                  onPressed: () {},
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 10), textAlign: TextAlign.center),
+                  ),
+                )
+              ],
+            ),
+          ],
+        );
     }
 
     return AppBar(
       backgroundColor: Colors.blue.shade800,
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      leading: Icon(leadingIcon, color: Colors.white),
+      actions: _selectedIndex == 3 ? [
+        IconButton(
+          icon: const Icon(Icons.settings, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+            );
+          },
+        ),
+      ] : null,
       elevation: 0,
-      leading: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: CircleAvatar(
-          backgroundColor: Colors.orange.shade700,
-          child: const Text('I', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        ),
-      ),
-      title: const Text(
-        'SOS_ELECTRICITY',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
-      actions: [
-        Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications, color: Colors.white),
-              onPressed: () {},
-            ),
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 10), textAlign: TextAlign.center),
-              ),
-            )
-          ],
-        ),
-      ],
     );
   }
 
@@ -124,18 +124,18 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => const AppointmentScreen()),
           );
         },
-        label: const Text('Prendre RDV'),
+        label: Text('takeAppointment'.tr()),
         icon: const Icon(Icons.add),
         backgroundColor: Colors.orange.shade700,
       )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'RDV'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: const Icon(Icons.home), label: 'home'.tr()),
+          BottomNavigationBarItem(icon: const Icon(Icons.calendar_today), label: 'appointments'.tr()),
+          BottomNavigationBarItem(icon: const Icon(Icons.chat_bubble_outline), label: 'chat'.tr()),
+          BottomNavigationBarItem(icon: const Icon(Icons.person_outline), label: 'profile'.tr()),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue.shade800,
@@ -160,9 +160,13 @@ class HomePageContent extends StatelessWidget {
           const SizedBox(height: 10),
           ServiceCard(
             icon: Icons.handyman,
-            title: 'Service Dépannage',
-            details: const ['Électricité Bâtiment', 'Électricité Réseau','Dépannage Industriel'],
-            buttonText: 'Demander un devis',
+            title: 'breakdownService'.tr(),
+            details: [
+              'breakdownDetail1'.tr(),
+              'breakdownDetail2'.tr(),
+              'breakdownDetail3'.tr()
+            ],
+            buttonText: 'requestQuote'.tr(),
             onPressed: () {
               Navigator.push(
                 context,
@@ -172,9 +176,9 @@ class HomePageContent extends StatelessWidget {
           ),
           ServiceCard(
             icon: Icons.home_work,
-            title: 'Service Rénovation',
-            details: const ['Électricité BT', 'Pose en apparent avec goulotte'],
-            buttonText: 'Consulter',
+            title: 'renovationService'.tr(),
+            details: ['renovationDetail1'.tr(), 'renovationDetail2'.tr()],
+            buttonText: 'consult'.tr(),
             onPressed: () {
               Navigator.push(
                 context,
@@ -184,9 +188,9 @@ class HomePageContent extends StatelessWidget {
           ),
           ServiceCard(
             icon: Icons.design_services,
-            title: 'Service Conception',
-            details: const ['Installation selon NF C100', 'Pose inverseur semi/manuel'],
-            buttonText: 'Consulter',
+            title: 'designService'.tr(),
+            details: ['designDetail1'.tr(), 'designDetail2'.tr()],
+            buttonText: 'consult'.tr(),
             onPressed: () {
               Navigator.push(
                 context,
@@ -196,9 +200,13 @@ class HomePageContent extends StatelessWidget {
           ),
           ServiceCard(
             icon: Icons.construction,
-            title: 'Prestation des services\n(travaux à la tâche)',
-            details: const ['Installation de prises', 'Montage de luminaires', 'Petits travaux électriques'],
-            buttonText: 'Demander un service',
+            title: 'taskService'.tr(),
+            details: [
+              'taskDetail1'.tr(),
+              'taskDetail2'.tr(),
+              'taskDetail3'.tr()
+            ],
+            buttonText: 'requestService'.tr(),
             onPressed: () {
               Navigator.push(
                 context,

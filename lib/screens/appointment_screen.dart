@@ -1,8 +1,8 @@
-// lib/screens/appointment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AppointmentScreen extends StatefulWidget {
   const AppointmentScreen({Key? key}) : super(key: key);
@@ -53,6 +53,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
+      locale: context.locale,
     );
     if (picked != null) {
       setState(() {
@@ -83,7 +84,6 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         return;
       }
 
-      // Enregistrement du rendez-vous
       await FirebaseFirestore.instance.collection('appointments').add({
         'userId': user.uid,
         'userEmail': user.email,
@@ -99,12 +99,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         'montant_envoye': double.tryParse(_paidAmountController.text) ?? 0,
       });
 
-      // --- MODIFICATION POUR LES NOTIFICATIONS ADMIN ---
       await FirebaseFirestore.instance.collection('chats').doc(user.uid).set({
         'lastMessageAt': Timestamp.now(),
         'userEmail': user.email,
         'userId': user.uid,
-        'unreadAppointmentCountAdmin': FieldValue.increment(1), // <-- LIGNE AJOUTÉE
+        'unreadAppointmentCountAdmin': FieldValue.increment(1),
       }, SetOptions(merge: true));
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -121,7 +120,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Prendre un rendez-vous'),
+        title: Text('takeAppointmentTitle'.tr()),
         backgroundColor: Colors.blue.shade800,
       ),
       body: SingleChildScrollView(
@@ -132,10 +131,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle('Service demandé'),
+                _buildSectionTitle('serviceRequested'.tr()),
                 _buildServiceDropdown(),
                 const SizedBox(height: 16),
-                _buildSectionTitle('Date et heure'),
+                _buildSectionTitle('dateAndTime'.tr()),
                 Row(
                   children: [
                     Expanded(child: _buildDateField()),
@@ -144,13 +143,13 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildSectionTitle('Description du problème'),
+                _buildSectionTitle('problemDescription'.tr()),
                 _buildDescriptionField(),
                 const SizedBox(height: 16),
-                _buildSectionTitle('Adresse d\'intervention'),
+                _buildSectionTitle('interventionAddress'.tr()),
                 _buildAddressField(),
                 const SizedBox(height: 24),
-                _buildSectionTitle('Paiement de l\'avance'),
+                _buildSectionTitle('advancePayment'.tr()),
                 _buildPaymentDropdown(),
                 const SizedBox(height: 16),
                 Row(
@@ -211,7 +210,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       controller: _dateController,
       readOnly: true,
       decoration: InputDecoration(
-        labelText: 'Date',
+        labelText: 'date'.tr(),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
@@ -226,7 +225,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       controller: _timeController,
       readOnly: true,
       decoration: InputDecoration(
-        labelText: 'Heure',
+        labelText: 'time'.tr(),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
@@ -241,12 +240,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       controller: _descriptionController,
       maxLines: 4,
       decoration: InputDecoration(
-        hintText: 'Décrivez votre demande en détail...',
+        hintText: 'describeRequest'.tr(),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
       ),
-      validator: (value) => value!.trim().isEmpty ? 'Veuillez décrire votre problème' : null,
+      validator: (value) => value!.trim().isEmpty ? 'pleaseDescribeProblem'.tr() : null,
     );
   }
 
@@ -254,12 +253,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     return TextFormField(
       controller: _addressController,
       decoration: InputDecoration(
-        hintText: 'Votre adresse complète',
+        hintText: 'yourFullAddress'.tr(),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
       ),
-      validator: (value) => value!.trim().isEmpty ? 'Veuillez entrer une adresse' : null,
+      validator: (value) => value!.trim().isEmpty ? 'pleaseEnterAddress'.tr() : null,
     );
   }
 
@@ -267,7 +266,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     return DropdownButtonFormField<String>(
       value: _selectedPaymentMethod,
       decoration: InputDecoration(
-        labelText: 'Méthode de paiement',
+        labelText: 'paymentMethod'.tr(),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
@@ -283,13 +282,13 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     return TextFormField(
       controller: _totalAmountController,
       decoration: InputDecoration(
-        labelText: 'Total (FCFA)',
+        labelText: 'totalAmount'.tr(),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
       ),
       keyboardType: TextInputType.number,
-      validator: (value) => value!.isEmpty ? 'Requis' : null,
+      validator: (value) => value!.isEmpty ? 'required'.tr() : null,
     );
   }
 
@@ -297,13 +296,13 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     return TextFormField(
       controller: _paidAmountController,
       decoration: InputDecoration(
-        labelText: 'Avance (FCFA)',
+        labelText: 'advanceAmount'.tr(),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
       ),
       keyboardType: TextInputType.number,
-      validator: (value) => value!.isEmpty ? 'Requis' : null,
+      validator: (value) => value!.isEmpty ? 'required'.tr() : null,
     );
   }
 
@@ -321,7 +320,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
             borderRadius: BorderRadius.circular(30.0),
           ),
         ),
-        child: const Text('Confirmer le rendez-vous'),
+        child: Text('confirmAppointment'.tr()),
       ),
     );
   }
