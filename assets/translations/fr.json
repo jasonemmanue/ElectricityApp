@@ -40,7 +40,7 @@
   "designDetail1": "Installation selon NF C100",
   "designDetail2": "Pose inverseur semi/manuel",
 
-  "taskService": "Prestation des services (travaux à la tâche)",
+  "taskService": "Prestation des services\n(travaux à la tâche)",
   "taskDetail1": "Installation de prises",
   "taskDetail2": "Montage de luminaires",
   "taskDetail3": "Petits travaux électriques",
