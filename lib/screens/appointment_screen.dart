@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:geolocator/geolocator.dart';
 
 class AppointmentScreen extends StatefulWidget {
   const AppointmentScreen({Key? key}) : super(key: key);
@@ -32,6 +33,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   final List<String> _paymentMethods = ['Orange Money', 'Mobile Money', 'Carte Bancaire'];
   final TextEditingController _totalAmountController = TextEditingController();
   final TextEditingController _paidAmountController = TextEditingController();
+
+  Position? _currentPosition;
 
   @override
   void initState() {
@@ -74,6 +77,39 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     }
   }
 
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Les services de localisation sont désactivés.')));
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Les autorisations de localisation sont refusées')));
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Les autorisations de localisation sont refusées de manière permanente, nous ne pouvons pas demander les autorisations.')));
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    setState(() {
+      _currentPosition = position;
+    });
+  }
+
   void _submitAppointment() async {
     if (_formKey.currentState!.validate()) {
       final user = FirebaseAuth.instance.currentUser;
@@ -97,6 +133,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         'methode_paiement': _selectedPaymentMethod,
         'montant_total': double.tryParse(_totalAmountController.text) ?? 0,
         'montant_envoye': double.tryParse(_paidAmountController.text) ?? 0,
+        'location': _currentPosition != null
+            ? GeoPoint(_currentPosition!.latitude, _currentPosition!.longitude)
+            : null,
       });
 
       await FirebaseFirestore.instance.collection('chats').doc(user.uid).set({
@@ -148,6 +187,30 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 const SizedBox(height: 16),
                 _buildSectionTitle('interventionAddress'.tr()),
                 _buildAddressField(),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _getCurrentLocation,
+                  icon: const Icon(Icons.location_on),
+                  label: const Text('Joindre ma position actuelle'),
+                ),
+                if (_currentPosition != null)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                            'Lat: ${_currentPosition!.latitude.toStringAsFixed(4)}, Lon: ${_currentPosition!.longitude.toStringAsFixed(4)}'),
+                      ),
+                      TextButton(
+                        child: const Text("OK"),
+                        onPressed: () {
+                          setState(() {
+                            _addressController.text =
+                            'Lat: ${_currentPosition!.latitude}, Lon: ${_currentPosition!.longitude}';
+                          });
+                        },
+                      )
+                    ],
+                  ),
                 const SizedBox(height: 24),
                 _buildSectionTitle('advancePayment'.tr()),
                 _buildPaymentDropdown(),
@@ -305,7 +368,6 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       validator: (value) => value!.isEmpty ? 'required'.tr() : null,
     );
   }
-
 
   Widget _buildSubmitButton() {
     return Center(
