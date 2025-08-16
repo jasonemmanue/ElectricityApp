@@ -41,10 +41,24 @@ class AppointmentsHistoryScreen extends StatelessWidget {
             itemCount: appointments.length,
             itemBuilder: (context, index) {
               var appt = appointments[index].data() as Map<String, dynamic>;
+              String status = appt['status'] ?? 'En attente';
+              Color statusColor;
+              switch (status) {
+                case 'Accepté':
+                  statusColor = Colors.green;
+                  break;
+                case 'Refusé':
+                  statusColor = Colors.red;
+                  break;
+                default:
+                  statusColor = Colors.orange;
+              }
+
               return Card(
                 elevation: 4,
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -52,13 +66,15 @@ class AppointmentsHistoryScreen extends StatelessWidget {
                     children: [
                       Text(
                         appt['service'] ?? 'service'.tr(),
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                          const Icon(Icons.calendar_today,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 8),
                           Text('${appt['date']} à ${appt['time']}'),
                         ],
@@ -66,17 +82,34 @@ class AppointmentsHistoryScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.receipt_long, size: 16, color: Colors.grey),
+                          const Icon(Icons.receipt_long,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 8),
-                          Text('${'total'.tr()}: ${appt['montant_total'] ?? 'N/A'} FCFA'),
+                          Text(
+                              '${'total'.tr()}: ${appt['montant_total'] ?? 'N/A'} FCFA'),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.payment, size: 16, color: Colors.grey),
+                          const Icon(Icons.payment,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 8),
-                          Text('${'advance'.tr()}: ${appt['montant_envoye'] ?? 'N/A'} FCFA (${appt['methode_paiement'] ?? 'N/A'})'),
+                          Text(
+                              '${'advance'.tr()}: ${appt['montant_envoye'] ?? 'N/A'} FCFA (${appt['methode_paiement'] ?? 'N/A'})'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Text('STATUT: ',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            status,
+                            style: TextStyle(
+                                color: statusColor,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ],
                       ),
                     ],

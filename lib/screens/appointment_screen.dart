@@ -25,9 +25,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   ];
 
   final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+
+  String? _selectedTime;
+  List<String> _availableTimes = [];
+  final List<String> _allTimes = ['08:00', '10:00', '12:00', '14:00', '16:00'];
 
   String? _selectedPaymentMethod = 'Orange Money';
   final List<String> _paymentMethods = ['Orange Money', 'Mobile Money', 'Carte Bancaire'];
@@ -40,14 +43,21 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   void initState() {
     super.initState();
     _dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    _fetchAvailableTimes(DateTime.now());
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_timeController.text.isEmpty) {
-      _timeController.text = TimeOfDay.now().format(context);
-    }
+  Future<void> _fetchAvailableTimes(DateTime date) async {
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    final snapshot = await FirebaseFirestore.instance
+        .collection('appointments')
+        .where('date', isEqualTo: formattedDate)
+        .get();
+
+    final bookedTimes = snapshot.docs.map((doc) => doc['time'] as String).toList();
+    setState(() {
+      _availableTimes = _allTimes.where((time) => !bookedTimes.contains(time)).toList();
+      _selectedTime = _availableTimes.isNotEmpty ? _availableTimes.first : null;
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -62,18 +72,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       setState(() {
         _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        _timeController.text = picked.format(context);
-      });
+      await _fetchAvailableTimes(picked);
     }
   }
 
@@ -100,7 +99,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
 
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Les autorisations de localisation sont refusées de manière permanente, nous ne pouvons pas demander les autorisations.')));
+          content: Text(
+              'Les autorisations de localisation sont refusées de manière permanente, nous ne pouvons pas demander les autorisations.')));
       return;
     }
 
@@ -119,13 +119,19 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         );
         return;
       }
+      if (_selectedTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun créneau disponible pour cette date.')),
+        );
+        return;
+      }
 
       await FirebaseFirestore.instance.collection('appointments').add({
         'userId': user.uid,
         'userEmail': user.email,
         'service': _selectedService,
         'date': _dateController.text,
-        'time': _timeController.text,
+        'time': _selectedTime,
         'description': _descriptionController.text,
         'address': _addressController.text,
         'createdAt': Timestamp.now(),
@@ -178,7 +184,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   children: [
                     Expanded(child: _buildDateField()),
                     const SizedBox(width: 10),
-                    Expanded(child: _buildTimeField()),
+                    Expanded(child: _buildTimeDropdown()),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -252,7 +258,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide.none),
       ),
       onChanged: (String? newValue) {
         setState(() {
@@ -276,25 +284,39 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         labelText: 'date'.tr(),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide.none),
         suffixIcon: const Icon(Icons.calendar_today),
       ),
       onTap: () => _selectDate(context),
     );
   }
 
-  Widget _buildTimeField() {
-    return TextFormField(
-      controller: _timeController,
-      readOnly: true,
+  Widget _buildTimeDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedTime,
       decoration: InputDecoration(
         labelText: 'time'.tr(),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
-        suffixIcon: const Icon(Icons.access_time),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide.none,
+        ),
       ),
-      onTap: () => _selectTime(context),
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedTime = newValue;
+        });
+      },
+      items: _availableTimes.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      hint: Text(_availableTimes.isEmpty ? 'Aucun créneau' : 'Sélectionner'),
     );
   }
 
@@ -306,9 +328,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         hintText: 'describeRequest'.tr(),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide.none),
       ),
-      validator: (value) => value!.trim().isEmpty ? 'pleaseDescribeProblem'.tr() : null,
+      validator: (value) =>
+      value!.trim().isEmpty ? 'pleaseDescribeProblem'.tr() : null,
     );
   }
 
@@ -319,9 +344,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         hintText: 'yourFullAddress'.tr(),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide.none),
       ),
-      validator: (value) => value!.trim().isEmpty ? 'pleaseEnterAddress'.tr() : null,
+      validator: (value) =>
+      value!.trim().isEmpty ? 'pleaseEnterAddress'.tr() : null,
     );
   }
 
@@ -332,12 +360,18 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         labelText: 'paymentMethod'.tr(),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide.none),
       ),
       onChanged: (String? newValue) {
-        setState(() { _selectedPaymentMethod = newValue; });
+        setState(() {
+          _selectedPaymentMethod = newValue;
+        });
       },
-      items: _paymentMethods.map((method) => DropdownMenuItem(value: method, child: Text(method))).toList(),
+      items: _paymentMethods
+          .map((method) => DropdownMenuItem(value: method, child: Text(method)))
+          .toList(),
     );
   }
 
@@ -348,7 +382,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         labelText: 'totalAmount'.tr(),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide.none),
       ),
       keyboardType: TextInputType.number,
       validator: (value) => value!.isEmpty ? 'required'.tr() : null,
@@ -362,7 +398,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         labelText: 'advanceAmount'.tr(),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide.none),
       ),
       keyboardType: TextInputType.number,
       validator: (value) => value!.isEmpty ? 'required'.tr() : null,
@@ -390,7 +428,6 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   @override
   void dispose() {
     _dateController.dispose();
-    _timeController.dispose();
     _descriptionController.dispose();
     _addressController.dispose();
     _totalAmountController.dispose();
